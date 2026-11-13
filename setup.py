@@ -8,18 +8,12 @@ st.set_page_config(page_title="Kelmo", page_icon="🔤")
 @st.cache_data
 def load_dictionary(full_filepath="dictionnaire.txt", common_filepath="mots_courants.txt"):
     try:
-        # Chargement du dictionnaire complet pour la validation des essais
         with open(full_filepath, "r", encoding="utf-8") as ff:
-            jaje = ff.read().splitlines()
-        
-        koka = unidecode(','.join(jaje))
-        word_list = koka.lower().split(',')
-        all_valid_words = [word for word in word_list if 5 <= len(word) <= 11 and word.isalpha()]
-        
-        # Chargement de la liste des mots courants pour le mot mystère
+            all_valid_words = ff.read().splitlines()
+
         with open(common_filepath, "r", encoding="utf-8") as cf:
             common_words = cf.read().splitlines()
-            
+
         return all_valid_words, common_words
     except FileNotFoundError:
         st.error("Les fichiers dictionnaire sont introuvables.")
