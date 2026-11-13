@@ -15,7 +15,67 @@ if not words:
 target_word = st.session_state.target_word
 word_length = len(target_word)
 
-st.write(f"Devinez le mot de {word_length} lettres. Il vous reste {st.session_state.max_attempts - len(st.session_state.guesses)} essais sur {st.session_state.max_attempts}.")
+# st.write(f"Devinez le mot de {word_length} lettres. Il vous reste {st.session_state.max_attempts - len(st.session_state.guesses)} essais sur {st.session_state.max_attempts}.")
+
+# --- MODIFICATION: Input field and game logic moved to the top ---
+if not st.session_state.game_over:
+    # CSS trick to visually capitalize letters while typing
+    st.markdown('''
+    <style> 
+    /* Visually capitalize letters */
+    input[type="text"] { text-transform: uppercase; } 
+    
+    /* Force form columns to stay on the same line on mobile */
+    @media (max-width: 716px) {
+        div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: flex-end !important;
+        }
+        div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] > div:nth-child(1) {
+            width: 75% !important;
+            min-width: 75% !important;
+        }
+        div[data-testid="stForm"] div[data-testid="stHorizontalBlock"] > div:nth-child(2) {
+            width: 25% !important;
+            min-width: 25% !important;
+        }
+    }
+    </style>
+''', unsafe_allow_html=True)
+    with st.form("guess_form", clear_on_submit=True):
+        # Create two columns to place input and button on the same line
+        col1, col2 = st.columns([3, 1]) 
+        
+        with col1:
+            # Hide the label to align the box perfectly with the button
+            user_guess = st.text_input(
+                "Entrez votre mot :", 
+                max_chars=word_length,
+                label_visibility="collapsed",
+                placeholder="Entrez votre mot..."
+            ).lower()
+            user_guess = unidecode(user_guess)
+            
+        with col2:
+            submit_button = st.form_submit_button("Valider", use_container_width=True)
+
+        if submit_button:
+            if len(user_guess) != word_length:
+                st.warning(f"Le mot doit contenir exactement {word_length} lettres.")
+            elif user_guess not in words:
+                st.warning("Ce mot n'est pas dans le dictionnaire.")
+            else:
+                st.session_state.guesses.append(user_guess)
+                
+                if user_guess == target_word:
+                    st.session_state.game_over = True
+                elif len(st.session_state.guesses) >= st.session_state.max_attempts:
+                    st.session_state.game_over = True
+                    
+                st.rerun()
+
+# --- MODIFICATION END ---
 
 # Render the game grid
 st.markdown('<div class="wordle-container">', unsafe_allow_html=True)
@@ -43,28 +103,6 @@ for _ in range(remaining_attempts):
     st.markdown(row_html, unsafe_allow_html=True)
     
 st.markdown('</div>', unsafe_allow_html=True)
-
-# Input field and game logic
-if not st.session_state.game_over:
-    with st.form("guess_form", clear_on_submit=True):
-        user_guess = st.text_input("Entrez votre mot :", max_chars=word_length).lower()
-        user_guess = unidecode(user_guess)
-        submit_button = st.form_submit_button("Valider")
-
-        if submit_button:
-            if len(user_guess) != word_length:
-                st.warning(f"Le mot doit contenir exactement {word_length} lettres.")
-            elif user_guess not in words:
-                st.warning("Ce mot n'est pas dans le dictionnaire.")
-            else:
-                st.session_state.guesses.append(user_guess)
-                
-                if user_guess == target_word:
-                    st.session_state.game_over = True
-                elif len(st.session_state.guesses) >= st.session_state.max_attempts:
-                    st.session_state.game_over = True
-                    
-                st.rerun()
 
 # Restart mechanism and Game Over UI
 if st.session_state.game_over:
